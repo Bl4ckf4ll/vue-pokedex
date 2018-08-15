@@ -1,13 +1,26 @@
 <template>
-    <div class="pokemon shadow p-4">
-        <img v-if="info" :src="info.sprites.front_default" width="100" class="block mx-auto my-5" alt="info">
+    <div class="pokemon shadow p-4" @click="openModal(pokemon)">
+        <div class="h-32">
+            <img v-if="pokemon" :src="pokemon.sprites.front_default" class="h-24 block mx-auto my-5" alt="info">
+            <img v-else src="../assets/images/pokeball.png" class="h-24 block mx-auto my-5 loader" alt="pokeballs">
+        </div>
         <div class="mb-2">
             <slot name="name"></slot>
-            <small v-if="info">N° {{ paddedOrder }}</small>
+            <small v-if="pokemon">N° {{ paddedOrder }}</small>
+            <small v-else>Loading...</small>
         </div>
-        <ul v-if="info" class="p-0">
-            <li v-for="type in info.types" v-bind:key="type.slot" class="inline mr-2">
-                <small :class="[ type.type.name, 'py-1', 'px-2', 'rounded', 'text-white' ]">{{ type.type.name }}</small>
+        <ul v-if="pokemon" class="p-0">
+            <li v-for="type in pokemon.types" v-bind:key="type.slot" class="inline mr-2">
+                <small :class="[ type.type.name, 'py-1', 'px-2', 'rounded', 'text-white' ]">
+                    {{ type.type.name }}
+                </small>
+            </li>
+        </ul>
+        <ul v-else>
+            <li class="inline mr-2">
+                <small :class="[ 'py-1', 'px-2', 'rounded', 'text-white', 'bg-grey' ]">
+                    Loading...
+                </small>
             </li>
         </ul>
     </div>
@@ -15,6 +28,7 @@
 
 <script>
   import axios from 'axios';
+  import Bus from '../Bus';
 
   export default {
     name: 'Pokemon',
@@ -23,18 +37,23 @@
     },
     data() {
       return {
-        info: null,
+        pokemon: null,
       }
     },
     mounted() {
       axios
         .get(this.url)
-        .then(({data}) => (this.info = data));
+        .then(({data}) => (this.pokemon = data));
     },
     computed: {
       paddedOrder() {
-        const order = this.info.order.toString();
+        const order = this.pokemon.order.toString();
         return order.padStart(3, '0');
+      }
+    },
+    methods: {
+      openModal(data) {
+        Bus.$emit('openModal', data);
       }
     }
   }
@@ -42,11 +61,12 @@
 
 <style scoped>
     .pokemon {
+        cursor: pointer;
         transition: all .5s;
     }
 
     .pokemon:hover {
-        box-shadow: 0 2px 10px 0 rgba(0,0,0,.4)
+        box-shadow: 0 2px 10px 0 rgba(0, 0, 0, .4)
     }
 
     .normal {
@@ -132,5 +152,17 @@
     .dragon {
         background-color: #7038F8;
         border: 1px solid #4924A1;
+    }
+    .loader {
+        animation: loader infinite linear 1s;
+    }
+
+    @keyframes loader {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
     }
 </style>
